@@ -293,6 +293,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double computeDistance(LatLng from, LatLng to) {
+        Log.d(TAG,"came to compute distance");
+
+        Toast.makeText(MainActivity.this, "distance lat and lng are :" +to.getLatitude() + ", " + from.getLatitude() + "lng " + to.getLongitude() + " ," +from.getLongitude()  , Toast.LENGTH_SHORT).show();
+
         double dLat = Math.toRadians(to.getLatitude() - from.getLatitude());
         double dLon = Math.toRadians(to.getLongitude() - from.getLongitude());
         double lat1 = Math.toRadians(from.getLatitude());
@@ -322,11 +326,13 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i <sizeOfSteps;i++){
             Log.d(TAG, i + "location lat lng " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation());
             Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getModifier());
+            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0]);
+            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1]);
             Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getType());
             Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getInstruction());
             manLocation[i] = new LatLng(
-                    route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0],
-                    route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1]);
+                    route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1],
+                    route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0]);
 
 
         }
@@ -575,44 +581,42 @@ public class MainActivity extends AppCompatActivity {
                         // listener is registered again and will adjust the camera once again.
                         if (manLocation!=null && manLocation.length != 0 ){
                             Log.d(TAG,"came here in location changed??");
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "location changed ********",
-                                    Toast.LENGTH_SHORT).show();
-
-                            LatLng nextAction = manLocation[0];
+                            LatLng nextAction = new LatLng(
+                                    allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[1],
+                                    allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[0]);
                             double threshold = computeDistance(new LatLng(location), nextAction);
-                            if (threshold < 0.0189394) {
 
+                            Toast.makeText(MainActivity.this, "location changed ********"  + String.valueOf(threshold), Toast.LENGTH_SHORT).show();
+
+
+
+
+                            if (threshold < 0.0189394) {
+                                Log.d(TAG,"direction changed");
                                 //can go on to next Step
                                 //remove what is already in the first step, then display the next step
-                                allDirectInfo.getLegs().get(0).getSteps().remove(0);
+                                Toast.makeText(MainActivity.this, allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction(), Toast.LENGTH_SHORT).show();
+
+
+
                                 String type = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getType();
                                 String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
                                 String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
-                                Toast.makeText(
-                                        MainActivity.this,
-                                        "Route is " + type + modifier,
-                                        Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "Route is " + type + modifier, Toast.LENGTH_SHORT).show();
 
-                                Toast.makeText(
-                                        MainActivity.this,
-                                        "instruction " + instruction,
-                                        Toast.LENGTH_SHORT).show();
 
-                                textView.setText("next direction: " + type + " " + modifier);
 
                                 if (type == "turn"){
 
                                     //here is where we should do all the actions right vibration
                                     //modifier are right, left, slight left, sharp right, etc
-                                    serialPort.write(modifier.getBytes());
+//                                    serialPort.write(modifier.getBytes());
                                 }
                             }
 
 
                             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location), 16));
-                            Log.d(TAG,"came here ********yyayayaa");
+                            allDirectInfo.getLegs().get(0).getSteps().remove(0);
 
 
 
