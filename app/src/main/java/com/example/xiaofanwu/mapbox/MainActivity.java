@@ -10,7 +10,10 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-
+import android.content.DialogInterface;
+import android.app.AlertDialog;
+import 	android.os.Build;
+import 	java.util.ArrayList;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -82,6 +85,90 @@ public class MainActivity extends AppCompatActivity {
     UsbDeviceConnection connection;
     private FloatingActionButton floatingActionButton;
     private LocationServices locationServices;
+    final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
+    private static final int PERMISSIONS_LOCATION = 0;
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        textView = (TextView) findViewById(R.id.textViewId);
+        usbManager = (UsbManager) getSystemService(this.USB_SERVICE);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_USB_PERMISSION);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        registerReceiver(broadcastReceiver, filter);
+
+
+
+
+        // Mapbox access token is configured here. This needs to be called either in your application
+        // object or in the same activity which contains the mapview.
+        MapboxAccountManager.start(this, getString(R.string.access_token));
+
+        // This contains the MapView in XML and needs to be called after the account manager
+        setContentView(R.layout.activity_mas_directions);
+//        askForPermission();
+
+
+        locationServices = LocationServices.getLocationServices(MainActivity.this);
+            Log.d(TAG,"permission not granted");
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_LOCATION);
+
+//        else{
+//            Log.d(TAG,"location is alreay enabled");
+//            enableLocation(true);
+//        }
+
+
+
+        // Set up autocomplete widget
+        GeocoderAutoCompleteView autocomplete = (GeocoderAutoCompleteView) findViewById(R.id.query);
+        autocomplete.setAccessToken(MapboxAccountManager.getInstance().getAccessToken());
+        autocomplete.setType(GeocodingCriteria.TYPE_POI);
+        autocomplete.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
+            @Override
+            public void OnFeatureClick (CarmenFeature feature) {
+                Log.d(TAG,"came to here at all??");
+                position = feature.asPosition();
+                Log.d(TAG,"p1 ******" + position.getLatitude()+ " , " + position.getLongitude());
+
+            }
+
+        });
+
+        GeocoderAutoCompleteView autocomplete1 = (GeocoderAutoCompleteView) findViewById(R.id.query1);
+        autocomplete1.setAccessToken(MapboxAccountManager.getInstance().getAccessToken());
+        autocomplete1.setType(GeocodingCriteria.TYPE_POI);
+        autocomplete1.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
+            @Override
+            public void OnFeatureClick (CarmenFeature feature) {
+                position1 = feature.asPosition();
+                Log.d(TAG,"p22 ******" + position1.getLatitude()+ " , " + position1.getLongitude());
+            }
+
+        });
+
+
+        // Setup the MapView
+        mapView = (MapView) findViewById(R.id.mapView);
+        mapView.onCreate(savedInstanceState);
+
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(MapboxMap mapboxMap) {
+                map = mapboxMap;
+            }
+        });
+
+    }
+
+
 
 
     UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() { //Defining a Callback which triggers whenever data is read.
@@ -149,132 +236,9 @@ public class MainActivity extends AppCompatActivity {
 
         ;
     };
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        textView = (TextView) findViewById(R.id.textViewId);
-        usbManager = (UsbManager) getSystemService(this.USB_SERVICE);
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        registerReceiver(broadcastReceiver, filter);
-
-
-
-
-        // Mapbox access token is configured here. This needs to be called either in your application
-        // object or in the same activity which contains the mapview.
-        MapboxAccountManager.start(this, getString(R.string.access_token));
-
-        // This contains the MapView in XML and needs to be called after the account manager
-        setContentView(R.layout.activity_mas_directions);
-
-        locationServices = LocationServices.getLocationServices(MainActivity.this);
-        lastLocation = locationServices.getLastLocation();
-
-
-        // Set up autocomplete widget
-        GeocoderAutoCompleteView autocomplete = (GeocoderAutoCompleteView) findViewById(R.id.query);
-        autocomplete.setAccessToken(MapboxAccountManager.getInstance().getAccessToken());
-        autocomplete.setType(GeocodingCriteria.TYPE_POI);
-        autocomplete.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
-            @Override
-            public void OnFeatureClick (CarmenFeature feature) {
-                position = feature.asPosition();
-                Log.d(TAG,"p1 ******" + position.getLatitude()+ " , " + position.getLongitude());
-
-            }
-
-        });
-
-        GeocoderAutoCompleteView autocomplete1 = (GeocoderAutoCompleteView) findViewById(R.id.query1);
-        autocomplete1.setAccessToken(MapboxAccountManager.getInstance().getAccessToken());
-        autocomplete1.setType(GeocodingCriteria.TYPE_POI);
-        autocomplete1.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
-            @Override
-            public void OnFeatureClick (CarmenFeature feature) {
-                position1 = feature.asPosition();
-                Log.d(TAG,"p22 ******" + position1.getLatitude()+ " , " + position1.getLongitude());
-            }
-
-        });
-
-
-        // Setup the MapView
-        mapView = (MapView) findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(MapboxMap mapboxMap) {
-                map = mapboxMap;
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation), 16));
-                map.setMyLocationEnabled(true);
-            }
-        });
-
-        locationServices.addLocationListener(new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                if (location != null) {
-                    map.setMyLocationEnabled(true);
-                    // Move the map camera to where the user location is and then remove the
-                    // listener so the camera isn't constantly updating when the user location
-                    // changes. When the user disables and then enables the location again, this
-                    // listener is registered again and will adjust the camera once again.
-                    if (manLocation!=null && manLocation.length != 0 ){
-                        Toast.makeText(
-                                MainActivity.this,
-                                "location changed ********",
-                                Toast.LENGTH_SHORT).show();
-
-                        LatLng nextAction = manLocation[0];
-                        double threshold = computeDistance(new LatLng(location), nextAction);
-                        if (threshold < 0.0189394) {
-
-                            //can go on to next Step
-                            //remove what is already in the first step, then display the next step
-                            allDirectInfo.getLegs().get(0).getSteps().remove(0);
-                            String type = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getType();
-                            String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
-                            String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "Route is " + type + modifier,
-                                    Toast.LENGTH_SHORT).show();
-
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "instruction " + instruction,
-                                    Toast.LENGTH_SHORT).show();
-
-                            textView.setText("next direction: " + type + " " + modifier);
-
-                            if (type == "turn"){
-
-                                //here is where we should do all the actions right vibration
-                                //modifier are right, left, slight left, sharp right, etc
-                                serialPort.write(modifier.getBytes());
-                            }
-                        }
-
-
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location), 16));
-                        Log.d(TAG,"came here ********yyayayaa");
-
-
-
-                    }
-
-                }
-            }
-        });
-
-    }
-
 
     private void getRoute(Position origin, Position destination) throws ServicesException {
+        Log.d(TAG,"came to get route");
 
         MapboxDirections client = new MapboxDirections.Builder()
                 .setOrigin(origin)
@@ -284,6 +248,8 @@ public class MainActivity extends AppCompatActivity {
                 .setSteps(true)
                 .setOverview("full")
                 .build();
+
+        Log.d(TAG,"came to before response");
 
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
@@ -340,6 +306,7 @@ public class MainActivity extends AppCompatActivity {
         double returnDistance = R * c;
         return returnDistance;
     }
+
 
 
     private void drawRoute(DirectionsRoute route) {
@@ -579,6 +546,86 @@ public class MainActivity extends AppCompatActivity {
         serialPort.close();
         Log.d(TAG, "Serial Connection Closed");
 
+    }
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                enableLocation(true);
+            }
+        }
+    }
+    private void enableLocation(boolean enabled) {
+            // If we have the last location of the user, we can move the camera to that position.
+            Location lastLocation = locationServices.getLastLocation();
+            if (lastLocation != null) {
+                Log.d(TAG,"last location not null");
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation), 16));
+            }
+
+            locationServices.addLocationListener(new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    if (location != null) {
+                        map.setMyLocationEnabled(true);
+                        // Move the map camera to where the user location is and then remove the
+                        // listener so the camera isn't constantly updating when the user location
+                        // changes. When the user disables and then enables the location again, this
+                        // listener is registered again and will adjust the camera once again.
+                        if (manLocation!=null && manLocation.length != 0 ){
+                            Log.d(TAG,"came here in location changed??");
+                            Toast.makeText(
+                                    MainActivity.this,
+                                    "location changed ********",
+                                    Toast.LENGTH_SHORT).show();
+
+                            LatLng nextAction = manLocation[0];
+                            double threshold = computeDistance(new LatLng(location), nextAction);
+                            if (threshold < 0.0189394) {
+
+                                //can go on to next Step
+                                //remove what is already in the first step, then display the next step
+                                allDirectInfo.getLegs().get(0).getSteps().remove(0);
+                                String type = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getType();
+                                String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
+                                String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
+                                Toast.makeText(
+                                        MainActivity.this,
+                                        "Route is " + type + modifier,
+                                        Toast.LENGTH_SHORT).show();
+
+                                Toast.makeText(
+                                        MainActivity.this,
+                                        "instruction " + instruction,
+                                        Toast.LENGTH_SHORT).show();
+
+                                textView.setText("next direction: " + type + " " + modifier);
+
+                                if (type == "turn"){
+
+                                    //here is where we should do all the actions right vibration
+                                    //modifier are right, left, slight left, sharp right, etc
+                                    serialPort.write(modifier.getBytes());
+                                }
+                            }
+
+
+                            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location), 16));
+                            Log.d(TAG,"came here ********yyayayaa");
+
+
+
+                        }
+
+                    }
+
+
+                }
+            });
+
+        // Enable or disable the location layer on the map
+        map.setMyLocationEnabled(enabled);
     }
 
 

@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "730649307595",
+    "firebase_url": "https://androidnavi-d3039.firebaseio.com",
+    "project_id": "androidnavi-d3039",
+    "storage_bucket": "androidnavi-d3039.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730649307595:android:9690395b910cce2d",
+        "android_client_info": {
+          "package_name": "com.example.xiaofanwu.mapbox"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "730649307595-29hi0vol16phcrghf2jacd7gki8ergcj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoayy869Yjpud6pPFUECW37LxkLlfCYRk"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
