@@ -603,9 +603,6 @@ public class MainActivity extends AppCompatActivity {
                                 String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
                                 String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
                                 Toast.makeText(MainActivity.this, "Route is " + type + modifier, Toast.LENGTH_SHORT).show();
-
-
-
                                 if (type == "turn"){
 
                                     //here is where we should do all the actions right vibration
@@ -613,12 +610,8 @@ public class MainActivity extends AppCompatActivity {
 //                                    serialPort.write(modifier.getBytes());
                                 }
                             }
-
-
                             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location), 16));
                             allDirectInfo.getLegs().get(0).getSteps().remove(0);
-
-
 
                         }
 
