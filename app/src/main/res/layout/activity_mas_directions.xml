@@ -7,15 +7,6 @@
     android:orientation="vertical"
     tools:context=".examples.mas.GeocodingActivity">
 
-    <com.mapbox.mapboxsdk.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        mapbox:center_latitude="52.5171"
-        mapbox:center_longitude="13.1479"
-        mapbox:style_url="@string/style_mapbox_streets"
-        mapbox:zoom="8"/>
-
     <com.mapbox.services.android.geocoder.ui.GeocoderAutoCompleteView
         android:id="@+id/query"
         android:layout_width="match_parent"
@@ -50,98 +41,115 @@
         android:singleLine="true"
         android:textColor="@android:color/black"/>
 
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="sharp left"-->
+        <!--android:id="@+id/button3"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_alignRight="@+id/button"-->
+        <!--android:layout_alignEnd="@+id/button"-->
+        <!--android:onClick="onClickSend"/>-->
+
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="wrong way"-->
+        <!--android:id="@+id/button4"-->
+        <!--android:layout_alignTop="@+id/button2"-->
+        <!--android:layout_toLeftOf="@+id/button2"-->
+        <!--android:layout_toStartOf="@+id/button2"-->
+        <!--android:onClick="wrongWay"/>-->
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="arrived"-->
+        <!--android:id="@+id/button5"-->
+        <!--android:layout_above="@+id/button3"-->
+        <!--android:layout_toRightOf="@+id/button4"-->
+        <!--android:layout_toEndOf="@+id/button4"-->
+        <!--android:onClick="arrived"/>-->
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="approaching"-->
+        <!--android:id="@+id/button6"-->
+        <!--android:layout_above="@+id/button3"-->
+        <!--android:layout_toRightOf="@+id/button2"-->
+        <!--android:layout_toEndOf="@+id/button2"-->
+        <!--android:onClick="approaching"/>-->
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="complete"-->
+        <!--android:id="@+id/button7"-->
+        <!--android:onClick="complete"-->
+        <!--android:layout_above="@+id/button4"-->
+        <!--android:layout_alignLeft="@+id/button4"-->
+        <!--android:layout_alignStart="@+id/button4" />-->
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="slight left"-->
+        <!--android:id="@+id/button8"-->
+        <!--android:layout_above="@+id/button7"-->
+        <!--android:layout_toLeftOf="@+id/button5"-->
+        <!--android:layout_toStartOf="@+id/button5"-->
+        <!--android:onClick="slightLeft"/>-->
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ROUTE"
         android:id="@+id/button"
+        android:onClick="route"
         android:layout_below="@+id/query1"
         android:layout_alignRight="@+id/query1"
-        android:layout_alignEnd="@+id/query1"
-        android:onClick="selfDestruct"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="sharp left"
-        android:id="@+id/button3"
-        android:layout_alignParentBottom="true"
-        android:layout_alignRight="@+id/button"
-        android:layout_alignEnd="@+id/button"
-        android:onClick="onClickSend"/>
-
+        android:layout_alignEnd="@+id/query1" />
 
     <TextView
+        android:text="TextView"
+        android:id="@+id/direction"
+        android:layout_height="100dp"
+        android:layout_width="match_parent"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textSize="36sp"
+        android:textStyle="normal|bold"
+        android:textAlignment="viewStart"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/imageView2"
+        android:layout_toStartOf="@+id/imageView2" />
 
-        android:layout_width="wrap_content"
-
+    <com.mapbox.mapboxsdk.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        mapbox:center_latitude="52.5171"
+        mapbox:center_longitude="13.1479"
+        mapbox:style_url="@string/style_mapbox_streets"
+        mapbox:zoom="8"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
-        android:id="@+id/textViewId"
-
-        android:elevation="12dp"
-
-        android:layout_alignParentBottom="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="left"
-        android:id="@+id/button2"
-        android:layout_alignTop="@+id/button3"
-        android:layout_toLeftOf="@+id/button3"
-        android:layout_toStartOf="@+id/button3"
-        android:onClick="left"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="wrong way"
-        android:id="@+id/button4"
-        android:layout_alignTop="@+id/button2"
-        android:layout_toLeftOf="@+id/button2"
-        android:layout_toStartOf="@+id/button2"
-        android:onClick="wrongWay"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="arrived"
-        android:id="@+id/button5"
-        android:layout_above="@+id/button3"
-        android:layout_toRightOf="@+id/button4"
-        android:layout_toEndOf="@+id/button4"
-        android:onClick="arrived"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="approaching"
-        android:id="@+id/button6"
-        android:layout_above="@+id/button3"
-        android:layout_toRightOf="@+id/button2"
-        android:layout_toEndOf="@+id/button2"
-        android:onClick="approaching"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="complete"
-        android:id="@+id/button7"
-        android:onClick="complete"
-        android:layout_above="@+id/button4"
-        android:layout_alignLeft="@+id/button4"
-        android:layout_alignStart="@+id/button4" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="slight left"
-        android:id="@+id/button8"
-        android:layout_above="@+id/button7"
-        android:layout_toLeftOf="@+id/button5"
-        android:layout_toStartOf="@+id/button5"
-        android:onClick="slightLeft"/>
+        <!--<Button-->
+            <!--android:text="left"-->
+            <!--android:id="@+id/button2"-->
+            <!--android:layout_alignTop="@+id/button3"-->
+            <!--android:layout_toLeftOf="@+id/button3"-->
+            <!--android:onClick="left"-->
+            <!--android:layout_width="57dp"-->
+            <!--android:layout_height="201dp"-->
+            <!--android:elevation="24dp"-->
+            <!--android:visibility="visible" />-->
+    </com.mapbox.mapboxsdk.maps.MapView>
 
 
 </RelativeLayout>

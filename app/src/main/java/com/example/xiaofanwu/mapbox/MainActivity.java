@@ -33,6 +33,24 @@ import android.hardware.usb.UsbManager;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ImageView;
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.os.Handler;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Set;
+import java.util.UUID;
 
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
@@ -75,57 +93,50 @@ public class MainActivity extends AppCompatActivity {
     public Position position1;
     private Location lastLocation;
     TextView textView;
+    ImageView imageView;
     Button startButton, sendButton, clearButton, stopButton;
     private LatLng[] manLocation;
     private DirectionsRoute allDirectInfo;
     public final String ACTION_USB_PERMISSION = "com.hariharan.arduinousb.USB_PERMISSION";
     UsbManager usbManager;
-    UsbDevice device;
     UsbSerialDevice serialPort;
     UsbDeviceConnection connection;
     private FloatingActionButton floatingActionButton;
     private LocationServices locationServices;
     final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
     private static final int PERMISSIONS_LOCATION = 0;
-
-
+    private final String DEVICE_ADDRESS="98:D3:32:30:82:73";
+    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
+    private BluetoothDevice device;
+    private BluetoothSocket socket;
+    private OutputStream outputStream;
+    private InputStream inputStream;
+    boolean deviceConnected=false;
+    Thread thread;
+    byte buffer[];
+    int bufferPosition;
+    boolean stopThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        textView = (TextView) findViewById(R.id.textViewId);
-        usbManager = (UsbManager) getSystemService(this.USB_SERVICE);
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        registerReceiver(broadcastReceiver, filter);
-
-
-
-
+        // set up bluetooth adapter
         // Mapbox access token is configured here. This needs to be called either in your application
         // object or in the same activity which contains the mapview.
         MapboxAccountManager.start(this, getString(R.string.access_token));
 
         // This contains the MapView in XML and needs to be called after the account manager
         setContentView(R.layout.activity_mas_directions);
-//        askForPermission();
+
+        textView = (TextView) findViewById(R.id.direction);
 
 
+        //set up location service permission
         locationServices = LocationServices.getLocationServices(MainActivity.this);
             Log.d(TAG,"permission not granted");
             ActivityCompat.requestPermissions(this, new String[]{
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_LOCATION);
-
-//        else{
-//            Log.d(TAG,"location is alreay enabled");
-//            enableLocation(true);
-//        }
-
-
 
         // Set up autocomplete widget
         GeocoderAutoCompleteView autocomplete = (GeocoderAutoCompleteView) findViewById(R.id.query);
@@ -141,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
-
+        //set up the second autocomplete widget
         GeocoderAutoCompleteView autocomplete1 = (GeocoderAutoCompleteView) findViewById(R.id.query1);
         autocomplete1.setAccessToken(MapboxAccountManager.getInstance().getAccessToken());
         autocomplete1.setType(GeocodingCriteria.TYPE_POI);
@@ -158,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
         // Setup the MapView
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
-
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(MapboxMap mapboxMap) {
@@ -171,71 +181,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() { //Defining a Callback which triggers whenever data is read.
-        @Override
-        public void onReceivedData(byte[] arg0) {
-            String data = null;
-            try {
-                data = new String(arg0, "UTF-8");
-                data.concat("/n");
-                Log.d(TAG,data + "came to usbreadcallback");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-    };
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() { //Broadcast Receiver to automatically start and stop the Serial connection.
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ACTION_USB_PERMISSION)) {
-                boolean granted = intent.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
-                if (granted) {
-                    Toast.makeText(
-                            MainActivity.this,
-                            "granted broadcast here yayay",
-                            Toast.LENGTH_SHORT).show();
-
-                    connection = usbManager.openDevice(device);
-                    serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection);
-                    if (serialPort != null) {
-                        if (serialPort.open()) { //Set Serial Connection Parameters.
-
-
-
-                            serialPort.setBaudRate(9600);
-                            serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
-                            serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
-                            serialPort.setParity(UsbSerialInterface.PARITY_NONE);
-                            serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
-                            serialPort.read(mCallback);
-                            Log.d(TAG, "Serial Connection Opened!\n");
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "Port is opened *******",
-                                    Toast.LENGTH_SHORT).show();
-
-                        } else {
-                            Log.d("SERIAL", "PORT NOT OPEN");
-                        }
-                    } else {
-                        Log.d("SERIAL", "PORT IS NULL");
-                    }
-                } else {
-                    Log.d("SERIAL", "PERM NOT GRANTED");
-                }
-            } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
-                Log.d(TAG,"came to able to start ");
-                onClickStart(startButton);
-            } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
-                onClickStop(stopButton);
-
-            }
-        }
-
-        ;
-    };
 
     private void getRoute(Position origin, Position destination) throws ServicesException {
         Log.d(TAG,"came to get route");
@@ -384,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
         mapView.onLowMemory();
     }
 
-    public void selfDestruct(View view) {
+    public void route(View view) {
 
 
         Log.d(TAG, "never came here?????????");
@@ -407,108 +352,115 @@ public class MainActivity extends AppCompatActivity {
                 .snippet("Plaza del Triunfo"));
 
 
-        HashMap usbDevices = usbManager.getDeviceList();
-
-        Toast.makeText(
-                MainActivity.this,
-                "USB DECVICE IS empty" +usbDevices.isEmpty() ,
-                Toast.LENGTH_SHORT).show();
-
-
-        if (!usbDevices.isEmpty()) {
-            Log.d(TAG, "came to usbdevice is not empty");
-            boolean keep = true;
-            Toast.makeText(
-                    MainActivity.this,
-                    "USB DECVICE IS Detected",
-                    Toast.LENGTH_SHORT).show();
-
-            for (Object key : usbDevices.keySet()) {
-                device = (UsbDevice) usbDevices.get(key);
-                Log.d(TAG,"came to the for loop");
-                int deviceVID = device.getVendorId();
-
-                Toast.makeText(
-                        MainActivity.this,
-                        "Device Id is" + deviceVID,
-                        Toast.LENGTH_SHORT).show();
-
-                if (deviceVID == 1027)//Arduino Vendor ID
-                {
-                    PendingIntent pi = PendingIntent.getBroadcast(this, 0,
-                            new Intent(ACTION_USB_PERMISSION), 0);
-                    usbManager.requestPermission(device, pi);
-                    keep = false;
-                } else {
-                    connection = null;
-                    device = null;
-                }
-
-                if (!keep)
-                    break;
-            }
-        }
-
         // Kabloey
     }
 
-    public void onClickStart(View view) {
-
-        HashMap usbDevices = usbManager.getDeviceList();
-        if (!usbDevices.isEmpty()) {
-            Log.d(TAG, "came to usbdevice is not empty");
-            boolean keep = true;
-
-            for (Object key : usbDevices.keySet()) {
-                device = (UsbDevice) usbDevices.get(key);
-                Log.d(TAG, "came to the for loop");
-                int deviceVID = device.getVendorId();
-                if (deviceVID == 1027)//Arduino Vendor ID
+    void beginListenForData()
+    {
+        final Handler handler = new Handler();
+        stopThread = false;
+        buffer = new byte[1024];
+        Thread thread  = new Thread(new Runnable()
+        {
+            public void run()
+            {
+                while(!Thread.currentThread().isInterrupted() && !stopThread)
                 {
-                    PendingIntent pi = PendingIntent.getBroadcast(this, 0,
-                            new Intent(ACTION_USB_PERMISSION), 0);
-                    usbManager.requestPermission(device, pi);
-                    keep = false;
-                } else {
-                    connection = null;
-                    device = null;
-                }
+                    try
+                    {
+                        int byteCount = inputStream.available();
+                        if(byteCount > 0)
+                        {
+                            byte[] rawBytes = new byte[byteCount];
+                            inputStream.read(rawBytes);
+                            final String string=new String(rawBytes,"UTF-8");
+                            handler.post(new Runnable() {
+                                public void run()
+                                {
+                                    Log.d(TAG, "running" );
 
-                if (!keep)
-                    break;
+//                                    textView.append(string);
+                                }
+                            });
+
+                        }
+                    }
+                    catch (IOException ex)
+                    {
+                        stopThread = true;
+                    }
+                }
             }
+        });
+
+        thread.start();
+    }
+
+    public void onClickStart(View view) {
+        if(BTinit())
+        {
+            if(BTconnect())
+            {
+                Log.d(TAG, "never came to the 2 for loop?????????");
+
+                deviceConnected=true;
+                beginListenForData();
+            }
+
         }
     }
+
     public void onClickSend(View view) {
-        String string = "sharp left";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG,"Data Sent : " + "string" + "\n");
+        String string ="sharp left";
+        string.concat("\n");
+        try {
+            outputStream.write(string.getBytes());
+            Toast.makeText(
+                    MainActivity.this,
+                    "Data sent *******" + string,
+                    Toast.LENGTH_SHORT).show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "cane to connected" );
 
     }
-    public void left(View view) {
-        String string = "left";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG,"Data Sent : " + "string" + "\n");
 
+
+    public void left(View view) {
+        String string ="left";
+        textView.append("\nSent Data:"+string+"\n");
+
+//        textView.setText("");
+        string.concat("\n");
+//        try {
+//            outputStream.write(string.getBytes());
+//            Toast.makeText(
+//                    MainActivity.this,
+//                    "Data sent *******" + string,
+//                    Toast.LENGTH_SHORT).show();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        Log.d(TAG, "cane to connected" );
     }
 
     public void slightLeft(View view) {
-        String string = "slight left";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG,"Data Sent : " + "string" + "\n");
+        String string ="slight left";
+        string.concat("\n");
+        try {
+            outputStream.write(string.getBytes());
+            Toast.makeText(
+                    MainActivity.this,
+                    "Data sent *******" + string,
+                    Toast.LENGTH_SHORT).show();
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "cane to connected" );
     }
 
     public void arrived(View view) {
@@ -553,6 +505,84 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Serial Connection Closed");
 
     }
+
+    public boolean BTinit()
+    {
+        boolean found=false;
+        BluetoothAdapter bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            Toast.makeText(getApplicationContext(),"Device doesnt Support Bluetooth",Toast.LENGTH_SHORT).show();
+        }
+        if(!bluetoothAdapter.isEnabled())
+        {
+            Intent enableAdapter = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableAdapter, 0);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+        if(bondedDevices.isEmpty())
+        {
+            Toast.makeText(getApplicationContext(),"Please Pair the Device first",Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            for (BluetoothDevice iterator : bondedDevices)
+            {
+                Toast.makeText(getApplicationContext(),"device Address is here****" + iterator.getAddress(),Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "device Address is here****" + iterator.getAddress());
+
+
+                if(iterator.getAddress().equals(DEVICE_ADDRESS))
+                {
+                    Log.d(TAG, "cane to the same address?????????");
+
+                    device=iterator;
+                    found=true;
+                    break;
+                }
+            }
+        }
+        return found;
+    }
+
+    public boolean BTconnect()
+    {
+        boolean connected=true;
+        try {
+            socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
+            socket.connect();
+        } catch (IOException e) {
+            Log.d(TAG, "cane to the error?????????" + e.toString());
+
+            e.printStackTrace();
+            connected=false;
+        }
+        if(connected)
+        {
+            Log.d(TAG, "cane to connected" );
+
+            try {
+                outputStream=socket.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStream=socket.getInputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+        return connected;
+    }
+
+
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -596,6 +626,9 @@ public class MainActivity extends AppCompatActivity {
                                 //can go on to next Step
                                 //remove what is already in the first step, then display the next step
                                 Toast.makeText(MainActivity.this, allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction(), Toast.LENGTH_SHORT).show();
+                                String nextInstruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
+                                textView.setText(nextInstruction);
+
 
 
 
