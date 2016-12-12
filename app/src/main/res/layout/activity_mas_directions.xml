@@ -41,15 +41,15 @@
         android:singleLine="true"
         android:textColor="@android:color/black"/>
 
-    <!--<Button-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="sharp left"-->
-        <!--android:id="@+id/button3"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_alignRight="@+id/button"-->
-        <!--android:layout_alignEnd="@+id/button"-->
-        <!--android:onClick="onClickSend"/>-->
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="connect blue tooth"
+        android:id="@+id/button3"
+        android:layout_alignParentBottom="true"
+        android:layout_alignRight="@+id/button"
+        android:layout_alignEnd="@+id/button"
+        android:onClick="onClickSend"/>
 
 
     <!--<Button-->
@@ -113,7 +113,7 @@
         android:layout_alignEnd="@+id/query1" />
 
     <TextView
-        android:text="TextView"
+        android:text="Direction Will Be Here"
         android:id="@+id/direction"
         android:layout_height="100dp"
         android:layout_width="match_parent"
@@ -137,18 +137,19 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/direction">
 
-        <!--<Button-->
-            <!--android:text="left"-->
-            <!--android:id="@+id/button2"-->
-            <!--android:layout_alignTop="@+id/button3"-->
-            <!--android:layout_toLeftOf="@+id/button3"-->
-            <!--android:onClick="left"-->
-            <!--android:layout_width="57dp"-->
-            <!--android:layout_height="201dp"-->
-            <!--android:elevation="24dp"-->
-            <!--android:visibility="visible" />-->
+        <Button
+            android:text="left"
+            android:id="@+id/button2"
+            android:layout_alignTop="@+id/button3"
+            android:layout_toLeftOf="@+id/button3"
+            android:onClick="left"
+            android:layout_width="57dp"
+            android:layout_height="201dp"
+            android:elevation="24dp"
+            android:visibility="visible" />
     </com.mapbox.mapboxsdk.maps.MapView>
 
 

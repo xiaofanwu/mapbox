@@ -106,7 +106,10 @@ public class MainActivity extends AppCompatActivity {
     final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
     private static final int PERMISSIONS_LOCATION = 0;
     private final String DEVICE_ADDRESS="98:D3:32:30:82:73";
-    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
+//    00001101-0000-1000-8000-00805f9b34fb
+//    00001101-0000-1000-8000-00805f9b34fb
+    //00000000-0000-1000-8000-00805f9b34fb
+    private final UUID PORT_UUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
     private BluetoothDevice device;
     private BluetoothSocket socket;
     private OutputStream outputStream;
@@ -165,6 +168,17 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        if(BTinit())
+        {
+            if(BTconnect())
+            {
+                Log.d(TAG, "never came to the 2 for loop?????????");
+
+                deviceConnected=true;
+                beginListenForData();
+            }
+
+        }
 
         // Setup the MapView
         mapView = (MapView) findViewById(R.id.mapView);
@@ -184,6 +198,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void getRoute(Position origin, Position destination) throws ServicesException {
         Log.d(TAG,"came to get route");
+        if(BTinit())
+        {
+            if(BTconnect())
+            {
+                Log.d(TAG, "never came to the 2 for loop?????????");
+
+                deviceConnected=true;
+                beginListenForData();
+            }
+
+        }
 
         MapboxDirections client = new MapboxDirections.Builder()
                 .setOrigin(origin)
@@ -220,6 +245,9 @@ public class MainActivity extends AppCompatActivity {
                 currentRoute = response.body().getRoutes().get(0);
                 Log.d(TAG, "geometry############" + currentRoute.getGeometry());
                 Log.d(TAG, "Distance: " + currentRoute.getDistance());
+                Log.d(TAG, "Estimate time is: " + currentRoute.getDuration());
+                textView.setText("Estimate time is: " + currentRoute.getDuration());
+
                 Toast.makeText(
                         MainActivity.this,
                         "Route is " + currentRoute.getDistance() + " meters long.",
@@ -274,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0]);
             Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1]);
             Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getType());
-            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getInstruction());
+            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getInstruction() + "*******after this");
             manLocation[i] = new LatLng(
                     route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1],
                     route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0]);
@@ -396,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
-    public void onClickStart(View view) {
+    public void onClickSend(View view) {
         if(BTinit())
         {
             if(BTconnect())
@@ -410,30 +438,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void onClickSend(View view) {
-        String string ="sharp left";
-        string.concat("\n");
-        try {
-            outputStream.write(string.getBytes());
-            Toast.makeText(
-                    MainActivity.this,
-                    "Data sent *******" + string,
-                    Toast.LENGTH_SHORT).show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Log.d(TAG, "cane to connected" );
-
-    }
-
-
-    public void left(View view) {
-        String string ="left";
-        textView.append("\nSent Data:"+string+"\n");
-
-//        textView.setText("");
-        string.concat("\n");
+//    public void onClickSend(View view) {
+//        String string ="sharp left";
+//        string.concat("\n");
 //        try {
 //            outputStream.write(string.getBytes());
 //            Toast.makeText(
@@ -445,10 +452,15 @@ public class MainActivity extends AppCompatActivity {
 //            e.printStackTrace();
 //        }
 //        Log.d(TAG, "cane to connected" );
-    }
+//
+//    }
 
-    public void slightLeft(View view) {
-        String string ="slight left";
+
+    public void left(View view) {
+        String string ="left";
+        textView.append("\nSent Data:"+string+"\n");
+
+//        textView.setText("");
         string.concat("\n");
         try {
             outputStream.write(string.getBytes());
@@ -461,6 +473,34 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         Log.d(TAG, "cane to connected" );
+    }
+
+    public void slightLeft(View view) {
+        if(BTinit())
+        {
+            if(BTconnect())
+            {
+                Log.d(TAG, "never came to the 2 for loop?????????");
+
+                deviceConnected=true;
+                beginListenForData();
+            }
+
+        }
+
+//        String string ="slight left";
+//        string.concat("\n");
+//        try {
+//            outputStream.write(string.getBytes());
+//            Toast.makeText(
+//                    MainActivity.this,
+//                    "Data sent *******" + string,
+//                    Toast.LENGTH_SHORT).show();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        Log.d(TAG, "cane to connected" );
     }
 
     public void arrived(View view) {
@@ -553,6 +593,10 @@ public class MainActivity extends AppCompatActivity {
     {
         boolean connected=true;
         try {
+            Log.d(TAG,device.getUuids()[0].toString() + "*************");
+            Log.d(TAG,device.getUuids()[1].toString() + "*************");
+            Log.d(TAG,device.getUuids()[2].toString() + "*************");
+
             socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
             socket.connect();
         } catch (IOException e) {
@@ -610,16 +654,12 @@ public class MainActivity extends AppCompatActivity {
                         // changes. When the user disables and then enables the location again, this
                         // listener is registered again and will adjust the camera once again.
                         if (manLocation!=null && manLocation.length != 0 ){
-                            Log.d(TAG,"came here in location changed??");
                             LatLng nextAction = new LatLng(
                                     allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[1],
                                     allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[0]);
                             double threshold = computeDistance(new LatLng(location), nextAction);
 
                             Toast.makeText(MainActivity.this, "location changed ********"  + String.valueOf(threshold), Toast.LENGTH_SHORT).show();
-
-
-
 
                             if (threshold < 0.0189394) {
                                 Log.d(TAG,"direction changed");
@@ -628,37 +668,49 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction(), Toast.LENGTH_SHORT).show();
                                 String nextInstruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
                                 textView.setText(nextInstruction);
-
-
-
-
                                 String type = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getType();
                                 String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
                                 String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
                                 Toast.makeText(MainActivity.this, "Route is " + type + modifier, Toast.LENGTH_SHORT).show();
+                                String instructionForArduino = type + " " + modifier;
                                 if (type == "turn"){
+                                    try {
+                                        outputStream.write(instructionForArduino.getBytes());
+                                        Toast.makeText(
+                                                MainActivity.this,
+                                                "Data sent *******" + instructionForArduino,
+                                                Toast.LENGTH_SHORT).show();
 
-                                    //here is where we should do all the actions right vibration
-                                    //modifier are right, left, slight left, sharp right, etc
-//                                    serialPort.write(modifier.getBytes());
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
                                 }
+                                if (type == "arrive") {
+                                    try {
+                                        String arrived = "arrive";
+                                        outputStream.write(arrived.getBytes());
+                                        Toast.makeText(
+                                                MainActivity.this,
+                                                "Data sent *******" + arrived,
+                                                Toast.LENGTH_SHORT).show();
+
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                    Log.d(TAG,"right before removing stuff!!!!!!*************");
+                                allDirectInfo.getLegs().get(0).getSteps().remove(0);
+
                             }
                             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location), 16));
-                            allDirectInfo.getLegs().get(0).getSteps().remove(0);
-
                         }
-
                     }
-
-
                 }
             });
 
-        // Enable or disable the location layer on the map
         map.setMyLocationEnabled(enabled);
     }
-
-
 
 }
 
