@@ -540,12 +540,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
         Log.d(TAG, "Data Sent : " + "string" + "\n");
     }
-    public void onClickStop(View view) {
-        serialPort.close();
-        Log.d(TAG, "Serial Connection Closed");
 
-    }
 
+    //initialize the bluetooth
     public boolean BTinit()
     {
         boolean found=false;
@@ -588,7 +585,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return found;
     }
-
+    //try to connect the bluetooth
     public boolean BTconnect()
     {
         boolean connected=true;
@@ -619,14 +616,9 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
-
-
         return connected;
     }
-
-
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -640,7 +632,6 @@ public class MainActivity extends AppCompatActivity {
             // If we have the last location of the user, we can move the camera to that position.
             Location lastLocation = locationServices.getLastLocation();
             if (lastLocation != null) {
-                Log.d(TAG,"last location not null");
                 map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation), 16));
             }
 
@@ -662,7 +653,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "location changed ********"  + String.valueOf(threshold), Toast.LENGTH_SHORT).show();
 
                             if (threshold < 0.0189394) {
-                                Log.d(TAG,"direction changed");
                                 //can go on to next Step
                                 //remove what is already in the first step, then display the next step
                                 Toast.makeText(MainActivity.this, allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction(), Toast.LENGTH_SHORT).show();
