@@ -91,29 +91,37 @@ public class MainActivity extends AppCompatActivity {
     private DirectionsRoute currentRoute;
     public Position position;
     public Position position1;
-    private Location lastLocation;
     TextView textView;
-    ImageView imageView;
-    Button startButton, sendButton, clearButton, stopButton;
     private LatLng[] manLocation;
     private DirectionsRoute allDirectInfo;
-    public final String ACTION_USB_PERMISSION = "com.hariharan.arduinousb.USB_PERMISSION";
-    UsbManager usbManager;
-    UsbSerialDevice serialPort;
-    UsbDeviceConnection connection;
-    private FloatingActionButton floatingActionButton;
     private LocationServices locationServices;
-    final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
     private static final int PERMISSIONS_LOCATION = 0;
-    private final String DEVICE_ADDRESS="98:D3:32:30:82:73";
+    private double threshold = 200;
+    private double diffWrong = 0;
+    //00:15:31:00:40:58 device one
+    //98:D3:32:30:82:73
+
+    private final String DEVICE_ADDRESS="98:D3:32:20:7E:AF";
+    private final String DEVICE_ADDRESS2="98:D3:32:30:82:73";
+
+
 //    00001101-0000-1000-8000-00805f9b34fb
 //    00001101-0000-1000-8000-00805f9b34fb
     //00000000-0000-1000-8000-00805f9b34fb
-    private final UUID PORT_UUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
+    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
+    private final UUID PORT_UUID2 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
+
     private BluetoothDevice device;
+    private BluetoothDevice device2;
+
     private BluetoothSocket socket;
+    private BluetoothSocket socket2;
+
     private OutputStream outputStream;
     private InputStream inputStream;
+    private OutputStream outputStream2;
+
+    private InputStream inputStream2;
     boolean deviceConnected=false;
     Thread thread;
     byte buffer[];
@@ -123,9 +131,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // set up bluetooth adapter
-        // Mapbox access token is configured here. This needs to be called either in your application
-        // object or in the same activity which contains the mapview.
+        // set up mapbox access token
         MapboxAccountManager.start(this, getString(R.string.access_token));
 
         // This contains the MapView in XML and needs to be called after the account manager
@@ -168,18 +174,6 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        if(BTinit())
-        {
-            if(BTconnect())
-            {
-                Log.d(TAG, "never came to the 2 for loop?????????");
-
-                deviceConnected=true;
-                beginListenForData();
-            }
-
-        }
-
         // Setup the MapView
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
@@ -192,24 +186,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-
-
-
     private void getRoute(Position origin, Position destination) throws ServicesException {
-        Log.d(TAG,"came to get route");
-        if(BTinit())
-        {
-            if(BTconnect())
-            {
-                Log.d(TAG, "never came to the 2 for loop?????????");
-
-                deviceConnected=true;
-                beginListenForData();
-            }
-
-        }
-
         MapboxDirections client = new MapboxDirections.Builder()
                 .setOrigin(origin)
                 .setDestination(destination)
@@ -218,9 +195,6 @@ public class MainActivity extends AppCompatActivity {
                 .setSteps(true)
                 .setOverview("full")
                 .build();
-
-        Log.d(TAG,"came to before response");
-
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
             public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
@@ -266,9 +240,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double computeDistance(LatLng from, LatLng to) {
-        Log.d(TAG,"came to compute distance");
-
-        Toast.makeText(MainActivity.this, "distance lat and lng are :" +to.getLatitude() + ", " + from.getLatitude() + "lng " + to.getLongitude() + " ," +from.getLongitude()  , Toast.LENGTH_SHORT).show();
 
         double dLat = Math.toRadians(to.getLatitude() - from.getLatitude());
         double dLon = Math.toRadians(to.getLongitude() - from.getLongitude());
@@ -287,29 +258,15 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void drawRoute(DirectionsRoute route) {
-
-//        Log.d(TAG, "getlegs" + route.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction());
-        // Convert LineString coordinates into LatLng[]
         Log.d(TAG, "size" + route.getLegs().get(0).getSteps().size());
         int sizeOfSteps = route.getLegs().get(0).getSteps().size();
-
-
         manLocation = new LatLng[sizeOfSteps];
         allDirectInfo = route;
         for (int i = 0; i <sizeOfSteps;i++){
-            Log.d(TAG, i + "location lat lng " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation());
-            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getModifier());
-            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0]);
-            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1]);
-            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getType());
-            Log.d(TAG, i + " " + route.getLegs().get(0).getSteps().get(i).getManeuver().getInstruction() + "*******after this");
             manLocation[i] = new LatLng(
                     route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[1],
                     route.getLegs().get(0).getSteps().get(i).getManeuver().getLocation()[0]);
-
-
         }
-        Log.d(TAG,manLocation.toString());
 
         LineString lineString = LineString.fromPolyline(route.getGeometry(), Constants.OSRM_PRECISION_V5);
         List<Position> coordinates = lineString.getCoordinates();
@@ -357,19 +314,15 @@ public class MainActivity extends AppCompatActivity {
         mapView.onLowMemory();
     }
 
+   //button to route from beginning to the end
     public void route(View view) {
-
-
-        Log.d(TAG, "never came here?????????");
-        Log.d(TAG, "p1came to here ******" + position.getLatitude() + " , " + position.getLongitude());
-        Log.d(TAG,"p2came to here ******" + position1.getLatitude()+ " , " + position1.getLongitude());
-
         try {
+            //call get route to get the calculate the route
             getRoute(position, position1);
         } catch (ServicesException servicesException) {
             servicesException.printStackTrace();
         }
-        // Add origin and destination to the map
+        // Add origin and destination markers to the map
         map.addMarker(new MarkerOptions()
                 .position(new LatLng(position.getLatitude(), position.getLongitude()))
                 .title("Origin")
@@ -380,7 +333,6 @@ public class MainActivity extends AppCompatActivity {
                 .snippet("Plaza del Triunfo"));
 
 
-        // Kabloey
     }
 
     void beginListenForData()
@@ -438,114 +390,117 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    public void onClickSend(View view) {
-//        String string ="sharp left";
-//        string.concat("\n");
-//        try {
-//            outputStream.write(string.getBytes());
-//            Toast.makeText(
-//                    MainActivity.this,
-//                    "Data sent *******" + string,
-//                    Toast.LENGTH_SHORT).show();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        Log.d(TAG, "cane to connected" );
-//
-//    }
-
-
     public void left(View view) {
         String string ="left";
-        textView.append("\nSent Data:"+string+"\n");
-
-//        textView.setText("");
         string.concat("\n");
         try {
+            //outstream write to the arduino
             outputStream.write(string.getBytes());
-            Toast.makeText(
-                    MainActivity.this,
-                    "Data sent *******" + string,
-                    Toast.LENGTH_SHORT).show();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "cane to connected" );
     }
+    public void right(View view) {
+        String string = "right";
+        string.concat("\n");
+        try{
+            outputStream2.write(string.getBytes());
+        }
+        catch(IOException e){
 
-    public void slightLeft(View view) {
-        if(BTinit())
-        {
-            if(BTconnect())
-            {
-                Log.d(TAG, "never came to the 2 for loop?????????");
-
-                deviceConnected=true;
-                beginListenForData();
-            }
+            e.printStackTrace();
 
         }
 
-//        String string ="slight left";
-//        string.concat("\n");
-//        try {
-//            outputStream.write(string.getBytes());
-//            Toast.makeText(
-//                    MainActivity.this,
-//                    "Data sent *******" + string,
-//                    Toast.LENGTH_SHORT).show();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        Log.d(TAG, "cane to connected" );
     }
+    public void slightLeft(View view) {
+
+
+        String string ="slight left";
+        string.concat("\n");
+        try {
+            outputStream.write(string.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+  public  void slightRight(View view){
+      String string ="slight right";
+      string.concat("\n");
+      try {
+          outputStream2.write(string.getBytes());
+
+      }
+      catch (IOException e) {
+          e.printStackTrace();
+
+      }
+  }
+      public  void sharpLeft(View view){
+          String string ="sharp left";
+          string.concat("\n");
+          try {
+              outputStream.write(string.getBytes());
+
+          }
+          catch (IOException e) {
+              e.printStackTrace();
+          }
+
+
+      }
+          public  void sharpRight(View view){
+              String string ="sharp right";
+              string.concat("\n");
+              try {
+             outputStream2.write(string.getBytes());
+              }
+              catch (IOException e) {
+                  e.printStackTrace();
+              }
+          }
+
 
     public void arrived(View view) {
         String string = "arrived";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Data Sent : " + "string" + "\n");
+        try {
+            outputStream.write(string.getBytes());
+            outputStream2.write(string.getBytes());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     public void approaching(View view) {
         String string = "approaching";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Data Sent : " + "string" + "\n");
+        try {
+            outputStream.write(string.getBytes());
+            outputStream2.write(string.getBytes());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-    public void complete(View view) {
-        String string = "action complete";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Data Sent : " + "string" + "\n");
-    }
+
 
     public void wrongWay(View view) {
         String string = "wrong";
-        serialPort.write(string.getBytes());
-        Toast.makeText(
-                MainActivity.this,
-                "Data sent *******" + string,
-                Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Data Sent : " + "string" + "\n");
+        try {
+            outputStream.write(string.getBytes());
+            outputStream2.write(string.getBytes());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     //initialize the bluetooth
     public boolean BTinit()
     {
-        boolean found=false;
+        boolean found = false;
+        boolean found2 = false;
         BluetoothAdapter bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             Toast.makeText(getApplicationContext(),"Device doesnt Support Bluetooth",Toast.LENGTH_SHORT).show();
@@ -575,12 +530,23 @@ public class MainActivity extends AppCompatActivity {
 
                 if(iterator.getAddress().equals(DEVICE_ADDRESS))
                 {
-                    Log.d(TAG, "cane to the same address?????????");
+                    Log.d(TAG, "cane to the this address?????????");
 
                     device=iterator;
                     found=true;
-                    break;
+
                 }
+                if (iterator.getAddress().equals(DEVICE_ADDRESS2)){
+                    Log.d(TAG, "cane to the that address?????????");
+
+
+                    device2 = iterator;
+                    found2 = true;
+                }
+                if (found && found2){
+                break;
+                }
+//
             }
         }
         return found;
@@ -590,29 +556,29 @@ public class MainActivity extends AppCompatActivity {
     {
         boolean connected=true;
         try {
-            Log.d(TAG,device.getUuids()[0].toString() + "*************");
-            Log.d(TAG,device.getUuids()[1].toString() + "*************");
-            Log.d(TAG,device.getUuids()[2].toString() + "*************");
-
             socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
-            socket.connect();
-        } catch (IOException e) {
-            Log.d(TAG, "cane to the error?????????" + e.toString());
+            socket2 = device2.createRfcommSocketToServiceRecord(PORT_UUID);
 
+            socket.connect();
+            socket2.connect();
+        } catch (IOException e) {
             e.printStackTrace();
             connected=false;
         }
         if(connected)
         {
-            Log.d(TAG, "cane to connected" );
 
             try {
                 outputStream=socket.getOutputStream();
+                outputStream2=socket2.getOutputStream();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
             try {
                 inputStream=socket.getInputStream();
+                inputStream2=socket2.getInputStream();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -648,9 +614,12 @@ public class MainActivity extends AppCompatActivity {
                             LatLng nextAction = new LatLng(
                                     allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[1],
                                     allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[0]);
-                            double threshold = computeDistance(new LatLng(location), nextAction);
+                            double PreviousTh = threshold;
+                            threshold = computeDistance(new LatLng(location), nextAction);
+                            //user is on the wrong direction
+                            if (PreviousTh-threshold >0.03){
 
-                            Toast.makeText(MainActivity.this, "location changed ********"  + String.valueOf(threshold), Toast.LENGTH_SHORT).show();
+                            }
 
                             if (threshold < 0.0189394) {
                                 //can go on to next Step
@@ -666,10 +635,6 @@ public class MainActivity extends AppCompatActivity {
                                 if (type == "turn"){
                                     try {
                                         outputStream.write(instructionForArduino.getBytes());
-                                        Toast.makeText(
-                                                MainActivity.this,
-                                                "Data sent *******" + instructionForArduino,
-                                                Toast.LENGTH_SHORT).show();
 
                                     } catch (IOException e) {
                                         e.printStackTrace();
@@ -678,18 +643,13 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 if (type == "arrive") {
                                     try {
-                                        String arrived = "arrive";
+                                        String arrived = "arrived";
                                         outputStream.write(arrived.getBytes());
-                                        Toast.makeText(
-                                                MainActivity.this,
-                                                "Data sent *******" + arrived,
-                                                Toast.LENGTH_SHORT).show();
-
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
                                 }
-                                    Log.d(TAG,"right before removing stuff!!!!!!*************");
+                                //remove the step we just completed from the list
                                 allDirectInfo.getLegs().get(0).getSteps().remove(0);
 
                             }

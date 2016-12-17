@@ -44,7 +44,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="connect blue tooth"
+        android:text="connect"
         android:id="@+id/button3"
         android:layout_alignParentBottom="true"
         android:layout_alignRight="@+id/button"
@@ -112,21 +112,6 @@
         android:layout_alignRight="@+id/query1"
         android:layout_alignEnd="@+id/query1" />
 
-    <TextView
-        android:text="Direction Will Be Here"
-        android:id="@+id/direction"
-        android:layout_height="100dp"
-        android:layout_width="match_parent"
-        android:textAppearance="@style/TextAppearance.AppCompat.Title"
-        android:textSize="36sp"
-        android:textStyle="normal|bold"
-        android:textAlignment="viewStart"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/imageView2"
-        android:layout_toStartOf="@+id/imageView2" />
-
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
@@ -140,17 +125,81 @@
         android:layout_alignParentStart="true"
         android:layout_above="@+id/direction">
 
-        <Button
-            android:text="left"
-            android:id="@+id/button2"
-            android:layout_alignTop="@+id/button3"
-            android:layout_toLeftOf="@+id/button3"
-            android:onClick="left"
-            android:layout_width="57dp"
-            android:layout_height="201dp"
-            android:elevation="24dp"
-            android:visibility="visible" />
     </com.mapbox.mapboxsdk.maps.MapView>
+
+    <Button
+        android:text="right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/button3"
+        android:layout_toStartOf="@+id/button3"
+        android:id="@+id/right"
+        android:onClick="right"/>
+
+    <Button
+        android:text="left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/right"
+        android:layout_toLeftOf="@+id/right"
+        android:layout_toStartOf="@+id/right"
+        android:id="@+id/left"
+        android:onClick="left"/>
+
+    <Button
+        android:text="slleft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/mapView"
+        android:layout_alignRight="@+id/button3"
+        android:layout_alignEnd="@+id/button3"
+        android:id="@+id/slleft"
+        android:onClick="slightLeft"/>
+
+    <Button
+        android:text="slright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button3"
+        android:layout_marginRight="23dp"
+        android:layout_marginEnd="23dp"
+        android:onClick="slightRight"/>
+
+    <TextView
+        android:text="Direction Will Be Here"
+        android:id="@+id/direction"
+        android:layout_height="100dp"
+        android:layout_width="match_parent"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textSize="36sp"
+        android:textStyle="normal|bold"
+        android:textAlignment="viewStart"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:text="shleft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/mapView"
+        android:layout_toRightOf="@+id/left"
+        android:layout_toEndOf="@+id/left"
+        android:id="@+id/button10"
+        android:onClick="sharpLeft"/>
+
+    <Button
+        android:text="shright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:id="@+id/button11"
+        android:onClick="sharpRight"
+        android:layout_alignBaseline="@+id/direction"
+        android:layout_alignBottom="@+id/direction"
+        android:layout_alignLeft="@+id/left"
+        android:layout_alignStart="@+id/left" />
 
 
 </RelativeLayout>
