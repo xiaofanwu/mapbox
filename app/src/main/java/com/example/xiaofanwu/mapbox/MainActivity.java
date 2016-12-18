@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSIONS_LOCATION = 0;
     private double threshold = 200;
     private double diffWrong = 0;
+    private double previousDiff = 0;
     //00:15:31:00:40:58 device one
     //98:D3:32:30:82:73
 
@@ -524,27 +525,18 @@ public class MainActivity extends AppCompatActivity {
         {
             for (BluetoothDevice iterator : bondedDevices)
             {
-                Toast.makeText(getApplicationContext(),"device Address is here****" + iterator.getAddress(),Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "device Address is here****" + iterator.getAddress());
-
 
                 if(iterator.getAddress().equals(DEVICE_ADDRESS))
                 {
-                    Log.d(TAG, "cane to the this address?????????");
-
                     device=iterator;
                     found=true;
-
                 }
                 if (iterator.getAddress().equals(DEVICE_ADDRESS2)){
-                    Log.d(TAG, "cane to the that address?????????");
-
-
                     device2 = iterator;
                     found2 = true;
                 }
                 if (found && found2){
-                break;
+                    break;
                 }
 //
             }
@@ -610,49 +602,63 @@ public class MainActivity extends AppCompatActivity {
                         // listener so the camera isn't constantly updating when the user location
                         // changes. When the user disables and then enables the location again, this
                         // listener is registered again and will adjust the camera once again.
-                        if (manLocation!=null && manLocation.length != 0 ){
+                        if (manLocation!=null && manLocation.length != 0 ) {
                             LatLng nextAction = new LatLng(
                                     allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[1],
                                     allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getLocation()[0]);
                             double PreviousTh = threshold;
                             threshold = computeDistance(new LatLng(location), nextAction);
+                            double diff = PreviousTh - threshold;
+                            if (previousDiff != 0){
+                               diffWrong = previousDiff-diff;
+                            }
+                            previousDiff = diff;
                             //user is on the wrong direction
-                            if (PreviousTh-threshold >0.03){
+                            if (diffWrong > 0.03) {
+                                String wrongWay = "wrong";
+                                try {
+                                    outputStream.write(wrongWay.getBytes());
+                                    outputStream2.write(wrongWay.getBytes());
 
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
+                            else{
 
-                            if (threshold < 0.0189394) {
-                                //can go on to next Step
-                                //remove what is already in the first step, then display the next step
-                                Toast.makeText(MainActivity.this, allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction(), Toast.LENGTH_SHORT).show();
-                                String nextInstruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
-                                textView.setText(nextInstruction);
-                                String type = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getType();
-                                String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
-                                String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
-                                Toast.makeText(MainActivity.this, "Route is " + type + modifier, Toast.LENGTH_SHORT).show();
-                                String instructionForArduino = type + " " + modifier;
-                                if (type == "turn"){
-                                    try {
-                                        outputStream.write(instructionForArduino.getBytes());
+                                if (threshold < 0.0189394) {
+                                    //can go on to next Step
+                                    //remove what is already in the first step, then display the next step
+                                    Toast.makeText(MainActivity.this, allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction(), Toast.LENGTH_SHORT).show();
+                                    String nextInstruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
+                                    textView.setText(nextInstruction);
+                                    String type = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getType();
+                                    String modifier = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getModifier();
+                                    String instruction = allDirectInfo.getLegs().get(0).getSteps().get(0).getManeuver().getInstruction();
+                                    Toast.makeText(MainActivity.this, "Route is " + type + modifier, Toast.LENGTH_SHORT).show();
+                                    String instructionForArduino = type + " " + modifier;
+                                    if (type == "turn") {
+                                        try {
+                                            outputStream.write(instructionForArduino.getBytes());
 
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
                                     }
+                                    if (type == "arrive") {
+                                        try {
+                                            String arrived = "arrived";
+                                            outputStream.write(arrived.getBytes());
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                    //remove the step we just completed from the list
+                                    allDirectInfo.getLegs().get(0).getSteps().remove(0);
 
                                 }
-                                if (type == "arrive") {
-                                    try {
-                                        String arrived = "arrived";
-                                        outputStream.write(arrived.getBytes());
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                //remove the step we just completed from the list
-                                allDirectInfo.getLegs().get(0).getSteps().remove(0);
-
-                            }
+                        }
                             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location), 16));
                         }
                     }
